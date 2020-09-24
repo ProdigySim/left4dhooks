@@ -898,12 +898,6 @@
 
 
 			// VIRTUAL CALLS
-			"CBaseServer_GetClient"
-			{
-				"linux"		"7"
-				"windows"	"6"
-			}
-
 			"DoAnimationEvent"
 			{
 				"windows"	"509"
@@ -2805,18 +2799,6 @@
 			}
 
 			/*
-			* CBaseServer::GetClient(int)
-			*/
-			"CBaseServer_GetClient"
-			{
-				"library"	"engine"
-				"linux"		"@_ZN11CBaseServer9GetClientEi"
-				"windows"	"\x55\x8B\x2A\x8B\x2A\x2A\x2A\x2A\x2A\x8B\x2A\x2A\x8B\x2A\x2A\x85\x2A\x74"
-				/* 55 8B ? 8B ? ? ? ? ? 8B ? ? 8B ? ? 85 ? 74 */
-				/* Vtable */
-			}
-
-			/*
 			* mov esi+[19h]
 			*/
 			"VanillaModeOffset"
@@ -3141,18 +3123,6 @@
 				"linux"		"@_ZN11SurvivorBot17SetHumanSpectatorEP13CTerrorPlayer"
 				"windows"	"\x55\x8B\xEC\x56\x8B\xF1\x83\xBE\x2A\x2A\x2A\x2A\x00\x7E\x07\x32\xC0\x5E\x5D\xC2\x04\x00\x8B\x0D"
 				/* 55 8B EC 56 8B F1 83 BE ? ? ? ? 00 7E 07 32 C0 5E 5D C2 04 00 8B 0D */
-			}
-
-			/*
-			* CBaseServer::GetClient(int)
-			*/
-			"CBaseClient_GetNetworkIDString"
-			{
-				"library"	"engine"
-				"linux"		"@_ZNK11CBaseClient18GetNetworkIDStringEv"
-				"windows"	"\x55\x8B\x2A\x83\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x33\x2A\x89\x2A\x2A\x56\x8B\x2A\x8B\x2A\x8B\x2A\x2A\x2A\x2A\x2A\xFF\x2A\x84"
-				/* 55 8B ? 83 ? ? A1 ? ? ? ? 33 ? 89 ? ? 56 8B ? 8B ? 8B ? ? ? ? ? FF ? 84 */
-				/* Search: "STEAM_%u:%u:%u" - called by target that contains "BOT". */
 			}
 		}
 	}

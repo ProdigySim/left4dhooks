@@ -443,7 +443,6 @@ GlobalForward g_hForward_AddonsDisabler;
 
 // NATIVES - SDKCall
 // Silvers Natives
-Handle g_hSDK_Call_GetClient;
 Handle g_hSDK_Call_GetLastKnownArea;
 Handle g_hSDK_Call_Deafen;
 Handle g_hSDK_Call_Dissolve;
@@ -1353,7 +1352,7 @@ void AddonsDisabler_Patch()
 		AddonsDisabler_Restore[1] = LoadFromAddress(VanillaModeAddress + view_as<Address>(VanillaModeOffset + 1), NumberType_Int8);
 		AddonsDisabler_Restore[2] = LoadFromAddress(VanillaModeAddress + view_as<Address>(VanillaModeOffset + 2), NumberType_Int8);
 	}
-
+	// PrintToServer("Adons restore: %02x%02x%02x", AddonsDisabler_Restore[0], AddonsDisabler_Restore[1], AddonsDisabler_Restore[2]);
 	StoreToAddress(VanillaModeAddress + view_as<Address>(VanillaModeOffset), 0x0F, NumberType_Int8);
 	StoreToAddress(VanillaModeAddress + view_as<Address>(VanillaModeOffset + 1), 0x1F, NumberType_Int8);
 	StoreToAddress(VanillaModeAddress + view_as<Address>(VanillaModeOffset + 2), 0x00, NumberType_Int8);
@@ -1370,27 +1369,20 @@ void AddonsDisabler_Unpatch()
 	}
 }
 
-
-
 // ====================================================================================================
 //										ADDONS DISABLER DETOUR
 // ====================================================================================================
 public MRESReturn AddonsDisabler(int pThis, Handle hReturn, Handle hParams)
 {
 	//PrintToServer("##### DTR AddonsDisabler");
-	// Get client index like downtown:
-	// int m_nPlayerSlot = *(int *)((unsigned char *)SVC_ServerInfo + 108);
-	// IClient *pClient = g_pServer->GetClient(m_nPlayerSlot);
-
 	int cvar = g_hCvarAddonsEclipse.IntValue;
 	if( cvar != -1 )
 	{
 		int ptr = DHookGetParam(hParams, 1);
-		int client = LoadFromAddress(view_as<Address>(ptr + 108), NumberType_Int8); // Network slot
-
-		//PrintToServer("#### CALL g_hSDK_Call_GetClient");
-		client = SDKCall(g_hSDK_Call_GetClient, g_pServer, client); // Pointer to somewhere in client address, not their actual entity address.
-		client = LoadFromAddress(view_as<Address>(client + 108), NumberType_Int8); // Strange, don't know why but works. Found with sm_ptr dump.
+		
+		// This is `m_nPlayerSlot` on the `SVC_ServerInfo`.
+		// This an index into `CBaseServer::m_Clients`. SourceMod's client entity indexes are just `m_Clients` index plus 1.
+		int client = LoadFromAddress(view_as<Address>(ptr + 108), NumberType_Int8) + 1;
 
 		if( client > 0 && client <= MaxClients && IsClientConnected(client) )
 		{
@@ -1402,8 +1394,9 @@ public MRESReturn AddonsDisabler(int pThis, Handle hReturn, Handle hParams)
 			Call_StartForward(g_hForward_AddonsDisabler);
 			Call_PushString(netID);
 			Call_Finish(aResult);
-
-			StoreToAddress(view_as<Address>(ptr + 85), aResult == Plugin_Handled ? 0 : view_as<int>(!cvar), NumberType_Int8);
+			int bVanillaMode = aResult == Plugin_Handled ? 0 : view_as<int>(!cvar);
+			// This `bVanillaMode` on SVC_ServerInfo. If set to true, the client will not load addons.
+			StoreToAddress(view_as<Address>(ptr + 85), bVanillaMode, NumberType_Int8);
 		}
 	}
 
@@ -1836,18 +1829,6 @@ void LoadGameData()
 			g_hSDK_Call_GetWeaponInfo = EndPrepSDKCall();
 			if( g_hSDK_Call_GetWeaponInfo == null )
 				LogError("Failed to create SDKCall: GetWeaponInfo");
-		}
-
-		StartPrepSDKCall(SDKCall_Raw);
-		if( PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseServer_GetClient") == false )
-		{
-			LogError("Failed to find signature: CBaseServer_GetClient");
-		} else {
-			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-			PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-			g_hSDK_Call_GetClient = EndPrepSDKCall();
-			if( g_hSDK_Call_GetClient == null )
-				LogError("Failed to create SDKCall: CBaseServer_GetClient");
 		}
 	}
 
