@@ -489,7 +489,7 @@ public Action sm_l4dd(int client, int args)
 
 
 
-	// WORKING 
+	// WORKING
 	// The "Fuse" + "Light" particles must be manually added in your plugin.
 	// I intentionally did not include this in left4dhooks in case you wanted to create an activated PipeBomb projectile without the particles.
 	int pipe = L4D_PipeBombPrj(client, vPos, vAng);
@@ -506,7 +506,7 @@ public Action sm_l4dd(int client, int args)
 
 
 
-	// WORKING 
+	// WORKING
 	float vDir[3];
 	// vDir = view_as<float>({ 0.0, 1.0, 0.0}); // Spin top over
 	vDir = view_as<float>({ -1.0, 0.0, 0.0}); // Spin sideways
@@ -1788,7 +1788,7 @@ public Action L4D2_OnClientDisableAddons(const char[] SteamID)
 	// return Plugin_Handled; // Allow addons.
 }
 
-/* 
+/*
 // Can trigger with: "z_spawn_old hunter auto" in console.
 // BROKEN, SPAWNS SPECIALS AT 0,0,0 WHEN MODIFYING VALUES
 public Action L4D_OnGetRandomPZSpawnPosition(int &client, int &zombieClass, int &attempts, float vecPos[3])
