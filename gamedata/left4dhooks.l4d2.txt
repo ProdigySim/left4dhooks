@@ -908,23 +908,18 @@
 			*/
 
 			// Network slot offset
+			// Offset into SVC_ServerInfo struct of player slot number
 			"AddonEclipse1"
 			{
-				"windows"	"48"
-				"linux"		"48"
-			}
-
-			// Client offset
-			"AddonEclipse2"
-			{
-				"windows"	"48"
-				"linux"		"48"
+				"windows"	"116"
+				"linux"		"108"
 			}
 
 			// Patch offset
-			"AddonEclipse3"
+			// Offset into SVC_ServerInfo struct of "Vanilla Mode" boolean
+			"AddonEclipse2"
 			{
-				"windows"	"85"
+				"windows"	"93"
 				"linux"		"85"
 			}
 			
