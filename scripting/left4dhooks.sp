@@ -1,6 +1,6 @@
 /*
 *	Left 4 DHooks Direct
-*	Copyright (C) 2020 Silvers
+*	Copyright (C) 2021 Silvers
 *
 *	This program is free software: you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 
 
-#define PLUGIN_VERSION		"1.29"
+#define PLUGIN_VERSION		"1.40"
 
 #define DEBUG				0
 // #define DEBUG			1	// Prints addresses + detour info (only use for debugging, slows server down)
@@ -37,6 +37,83 @@
 
 ========================================================================================
 	Change Log:
+
+1.40 (16-Jun-2021)
+	- L4D2: Fixed various offsets breaking from "2.2.1.3" game update. Thanks to "Nuki" for reporting and helping.
+
+1.39 (16-Jun-2021)
+	- Changed command "sm_l4dd_detours" results displayed to be read easier.
+	- L4D2: Fixed signatures breaking from "2.2.1.3" game update. Thanks to "Crasher_3637" for fixing.
+	- L4D2: Fixed "VanillaModeOffset" in Linux breaking from "2.2.1.3" game update. Thanks to "Accelerator74" for fixing.
+
+1.38 (28-Apr-2021)
+	- Changed native "L4D2_IsReachable" to allow using team 2 and team 4.
+
+1.37 (20-Apr-2021)
+	- Removed "RoundRespawn" being used, was for private testing, maybe a future native. Thanks to "Ja-Forces" for reporting.
+
+1.36 (20-Apr-2021)
+	- Added optional forward "AP_OnPluginUpdate" from "Autoreload Plugins" by Dragokas, to rescan required detours when loaded plugins change.
+	- Fixed native "L4D2Direct_GetFlowDistance" sometimes returning -9999.0 when invalid, now returns 0.0;
+	- Fixed native "L4D_FindRandomSpot" from crashing Linux servers. Thanks to "Gold Fish" for reporting and fixing and "Marttt" for testing.
+	- Restricted native "L4D2_IsReachable" client index to Survivor bots only. Attempts to find a valid bot otherwise it will throw an error. Thanks to "Forgetest" for reporting.
+	- Signatures compatibility with plugins detouring them. L4D1: "OnLedgeGrabbed", "OnRevived" and L4D2: "OnLedgeGrabbed". Thanks to "Dragokas" for providing.
+
+	- Updated: L4D1 GameData file.
+	- Updated: L4D2 GameData file.
+	- Updated: Plugin and Include file.
+	- Updated: Test plugin to reflect above changes.
+
+1.35 (10-Apr-2021)
+	- Fixed native "L4D_GetTeamScore" error message when using the wrong team values. Thanks to "BHaType" for reporting.
+	- Restricted native "L4D2_IsReachable" client index to bots only. Attempts to find a valid bot otherwise it will throw an error. Thanks to "Forgetest" for reporting.
+
+1.34 (23-Mar-2021)
+	- Added native "L4D_HasPlayerControlledZombies" to return if players can control infected. Thanks to "Spirit_12" for requesting.
+	- Thanks to "Crasher_3637" for the L4D1 signature.
+	- Fixed Linux detection accidentally being broken from version 1.17 update.
+
+	- Updated: L4D1 GameData file.
+	- Updated: L4D2 GameData file.
+	- Updated: Plugin and Include file.
+	- Updated: Test plugin to reflect above changes.
+
+1.33a (04-Mar-2021)
+	- L4D1 GameData updated. Changes fixing "L4D2_OnEntityShoved" were missing from the previous update.
+
+1.33 (02-Mar-2021)
+	- Changed forward "L4D2_OnEntityShoved" to trigger for all entities being shoved not just clients.
+	- Fixed forward "L4D2_OnEntityShoved" not working in L4D1. GameData file updated for L4D1.
+	- Fixed native "L4D_IsFirstMapInScenario" crashing in L4D1 from changes in version 1.30 update.
+
+1.32 (23-Feb-2021)
+	- Changed native "L4D_GetRandomPZSpawnPosition" to accept client index of 0. Thanks to "Accelerator74" for reporting.
+	- Fixed target filters misspelling "incapped". Thanks to "Forgetest" for reporting.
+
+1.31 (23-Feb-2021)
+	- Added Target Filters to target randomly. Requested by "Tonblader":
+		"@incappedsurvivors", "@is"
+		"@randomincappedsurvivor", "@ris"
+		"@randomsurvivor", "@rs"
+		"@randominfected", "@ri"
+		"@randomtank", "@rt"
+		"@incappedsurvivorbot", "@isb"
+		"@survivorbot", "@sb"
+		"@infectedbot", "@ib"
+		"@tankbot", "@tb"
+
+	- Fixed "L4D_GetPlayerSpawnTime" from returning the wrong value again. Thanks to "Forgetest" for reporting.
+
+1.30 (15-Feb-2021)
+	- Fixed natives "L4D2_SetIntMeleeAttribute" and "L4D2_SetFloatMeleeAttribute" functions. Thanks to "bw4re" for reporting.
+	- Fixed native "L4D_GetPlayerSpawnTime" giving the wrong time. Thanks to "Forgetest" for reporting.
+
+	- Fixes by "Dragokas"
+	- Fixed native "L4D_IsFirstMapInScenario" call with SDKCall_Raw returned error in SM 1.11, L4D1. Thanks to "Crasher" for reporting, and "Rostu" for help.
+	- Fixed "ForceNextStage" signature (WIN).
+
+	- Updated: L4D2 GameData file.
+	- Updated: Plugin.
 
 1.29 (10-Oct-2020)
 	- Fixed "L4D_StaggerPlayer" not working with NULL_VECTOR. Thanks to "Zippeli" for reporting.
@@ -381,7 +458,7 @@ float g_fProf;
 
 
 
-// Dissolve
+// Dissolver
 #define SPRITE_GLOW							"sprites/blueglow1.vmt"
 
 static const char g_sModels1[][] =
@@ -494,6 +571,7 @@ Handle g_hSDK_Call_Dissolve;
 Handle g_hSDK_Call_OnITExpired;
 Handle g_hSDK_Call_AngularVelocity;
 Handle g_hSDK_Call_IsReachable;
+Handle g_hSDK_Call_HasPlayerControlledZombies;
 Handle g_hSDK_Call_PipeBombPrj;
 Handle g_hSDK_Call_SpitterPrj;
 Handle g_hSDK_Call_ForceNextStage;
@@ -544,6 +622,7 @@ Handle g_hSDK_Call_CTerrorPlayer_OnHitByVomitJar;
 Handle g_hSDK_Call_Infected_OnHitByVomitJar;
 Handle g_hSDK_Call_Fling;
 Handle g_hSDK_Call_CancelStagger;
+// Handle g_hSDK_Call_RoundRespawn;
 Handle g_hSDK_Call_CreateRescuableSurvivors;
 Handle g_hSDK_Call_OnRevived;
 Handle g_hSDK_Call_GetVersusCompletionPlayer;
@@ -608,6 +687,7 @@ int m_maxFlames;
 int m_flow;
 int m_PendingMobCount;
 int m_fMapMaxFlowDistance;
+// int m_iClrRender; // NULL PTR - METHOD (kept for demonstration)
 
 // l4d2timers.inc
 int L4D2CountdownTimer_Offsets[9];
@@ -753,8 +833,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 	// ====================================================================================================
 	//									NATIVES
-	// L4D1 = 12 [left4downtown] + 43 - 0 (deprecated) [l4d_direct] + 15 [l4d2addresses] + 13 [silvers - mine!] + 4 [anim] = 87
-	// L4D2 = 52 [left4downtown] + 62 - 1 (deprecated) [l4d_direct] + 26 [l4d2addresses] + 21 [silvers - mine!] + 4 [anim] = 163
+	// L4D1 = 12 [left4downtown] + 43 - 0 (deprecated) [l4d_direct] + 15 [l4d2addresses] + 14 [silvers - mine!] + 4 [anim] = 88
+	// L4D2 = 52 [left4downtown] + 62 - 1 (deprecated) [l4d_direct] + 26 [l4d2addresses] + 22 [silvers - mine!] + 4 [anim] = 164
 	// ====================================================================================================
 	// ANIMATION HOOK
 	CreateNative("AnimHookEnable",		 							Native_AnimHookEnable);
@@ -779,6 +859,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("L4D_IsAnySurvivorInCheckpoint",		 			Native_IsAnySurvivorInCheckpoint);
 	CreateNative("L4D_IsInFirstCheckpoint",		 					Native_IsInFirstCheckpoint);
 	CreateNative("L4D_IsInLastCheckpoint",		 					Native_IsInLastCheckpoint);
+	CreateNative("L4D_HasPlayerControlledZombies",		 			Native_HasPlayerControlledZombies);
 	CreateNative("L4D_PipeBombPrj",		 							Native_PipeBombPrj);
 
 	if( g_bLeft4Dead2 )
@@ -947,6 +1028,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	// =========================
 	CreateNative("L4D_CTerrorPlayer_OnVomitedUpon",					Native_CTerrorPlayer_OnVomitedUpon);
 	CreateNative("L4D_CancelStagger",								Native_CancelStagger);
+	// CreateNative("L4D_RespawnPlayer",								Native_RespawnPlayer); // Future addition maybe
 	CreateNative("L4D_CreateRescuableSurvivors",					Native_CreateRescuableSurvivors);
 	CreateNative("L4D_ReviveSurvivor",								Native_OnRevived);
 	CreateNative("L4D_GetHighestFlowSurvivor",						Native_GetHighestFlowSurvivor);
@@ -995,6 +1077,17 @@ public void OnPluginStart()
 	g_iHookedClients = new ArrayList();
 	g_hAnimationCallbackPre = new PrivateForward(ET_Event, Param_Cell, Param_CellByRef);
 	g_hAnimationCallback = new PrivateForward(ET_Event, Param_Cell, Param_CellByRef);
+
+
+	// NULL PTR - METHOD (kept for demonstration)
+	// Null pointer - by Dragokas
+	/*
+	m_iClrRender = FindSendPropInfo("CBaseEntity", "m_clrRender");
+	if( m_iClrRender == -1 )
+	{
+		SetFailState("Error: m_clrRender not found.");
+	}
+	*/
 
 
 
@@ -1089,32 +1182,51 @@ public void OnPluginStart()
 	// ====================================================================================================
 	//									TARGET FILTERS
 	// ====================================================================================================
-	AddMultiTargetFilter("@s",				FilterSurvivor,	"Survivors", false);
-	AddMultiTargetFilter("@surv",			FilterSurvivor,	"Survivors", false);
-	AddMultiTargetFilter("@survivors",		FilterSurvivor,	"Survivors", false);
-	AddMultiTargetFilter("@infe",			FilterInfected,	"Infected", false);
-	AddMultiTargetFilter("@infected",		FilterInfected,	"Infected", false);
-	AddMultiTargetFilter("@i",				FilterInfected,	"Infected", false);
+	AddMultiTargetFilter("@s",							FilterSurvivor,	"Survivors", false);
+	AddMultiTargetFilter("@surv",						FilterSurvivor,	"Survivors", false);
+	AddMultiTargetFilter("@survivors",					FilterSurvivor,	"Survivors", false);
+	AddMultiTargetFilter("@incappedsurvivors",			FilterIncapped,	"Incapped Survivors", false);
+	AddMultiTargetFilter("@is",							FilterIncapped,	"Incapped Survivors", false);
+	AddMultiTargetFilter("@infe",						FilterInfected,	"Infected", false);
+	AddMultiTargetFilter("@infected",					FilterInfected,	"Infected", false);
+	AddMultiTargetFilter("@i",							FilterInfected,	"Infected", false);
 
-	AddMultiTargetFilter("@nick",			FilterNick,		"Nick", false);
-	AddMultiTargetFilter("@rochelle",		FilterRochelle,	"Rochelle", false);
-	AddMultiTargetFilter("@coach",			FilterCoach,	"Coach", false);
-	AddMultiTargetFilter("@ellis",			FilterEllis,	"Ellis", false);
-	AddMultiTargetFilter("@bill",			FilterBill,		"Bill", false);
-	AddMultiTargetFilter("@zoey",			FilterZoey,		"Zoey", false);
-	AddMultiTargetFilter("@francis",		FilterFrancis,	"Francis", false);
-	AddMultiTargetFilter("@louis",			FilterLous,		"Louis", false);
+	AddMultiTargetFilter("@randomincappedsurvivor",		FilterRandomA,	"Random Incapped Survivors", false);
+	AddMultiTargetFilter("@ris",						FilterRandomA,	"Random Incapped Survivors", false);
+	AddMultiTargetFilter("@randomsurvivor",				FilterRandomB,	"Random Survivors", false);
+	AddMultiTargetFilter("@rs",							FilterRandomB,	"Random Survivors", false);
+	AddMultiTargetFilter("@randominfected",				FilterRandomC,	"Random Infected", false);
+	AddMultiTargetFilter("@ri",							FilterRandomC,	"Random Infected", false);
+	AddMultiTargetFilter("@randomtank",					FilterRandomD,	"Random Tank", false);
+	AddMultiTargetFilter("@rt",							FilterRandomD,	"Random Tank", false);
+	AddMultiTargetFilter("@incappedsurvivorbot",		FilterRandomE,	"Random Incapped Survivor Bot", false);
+	AddMultiTargetFilter("@isb",						FilterRandomE,	"Random Incapped Survivor Bot", false);
+	AddMultiTargetFilter("@survivorbot",				FilterRandomF,	"Random Survivor Bot", false);
+	AddMultiTargetFilter("@sb",							FilterRandomF,	"Random Survivor Bot", false);
+	AddMultiTargetFilter("@infectedbot",				FilterRandomG,	"Random Infected Bot", false);
+	AddMultiTargetFilter("@ib",							FilterRandomG,	"Random Infected Bot", false);
+	AddMultiTargetFilter("@tankbot",					FilterRandomH,	"Random Tank Bot", false);
+	AddMultiTargetFilter("@tb",							FilterRandomH,	"Random Tank Bot", false);
 
-	AddMultiTargetFilter("@smokers",		FilterSmoker,	"Smokers", false);
-	AddMultiTargetFilter("@boomers",		FilterBoomer,	"Boomers", false);
-	AddMultiTargetFilter("@hunters",		FilterHunter,	"Hunters", false);
-	AddMultiTargetFilter("@spitters",		FilterSpitter,	"Spitters", false);
-	AddMultiTargetFilter("@jockeys",		FilterJockey,	"Jockeys", false);
-	AddMultiTargetFilter("@chargers",		FilterCharger,	"Chargers", false);
+	AddMultiTargetFilter("@nick",						FilterNick,		"Nick", false);
+	AddMultiTargetFilter("@rochelle",					FilterRochelle,	"Rochelle", false);
+	AddMultiTargetFilter("@coach",						FilterCoach,	"Coach", false);
+	AddMultiTargetFilter("@ellis",						FilterEllis,	"Ellis", false);
+	AddMultiTargetFilter("@bill",						FilterBill,		"Bill", false);
+	AddMultiTargetFilter("@zoey",						FilterZoey,		"Zoey", false);
+	AddMultiTargetFilter("@francis",					FilterFrancis,	"Francis", false);
+	AddMultiTargetFilter("@louis",						FilterLouis,	"Louis", false);
 
-	AddMultiTargetFilter("@tank",			FilterTanks,	"Tanks", false);
-	AddMultiTargetFilter("@tanks",			FilterTanks,	"Tanks", false);
-	AddMultiTargetFilter("@t",				FilterTanks,	"Tanks", false);
+	AddMultiTargetFilter("@smokers",					FilterSmoker,	"Smokers", false);
+	AddMultiTargetFilter("@boomers",					FilterBoomer,	"Boomers", false);
+	AddMultiTargetFilter("@hunters",					FilterHunter,	"Hunters", false);
+	AddMultiTargetFilter("@spitters",					FilterSpitter,	"Spitters", false);
+	AddMultiTargetFilter("@jockeys",					FilterJockey,	"Jockeys", false);
+	AddMultiTargetFilter("@chargers",					FilterCharger,	"Chargers", false);
+
+	AddMultiTargetFilter("@tank",						FilterTanks,	"Tanks", false);
+	AddMultiTargetFilter("@tanks",						FilterTanks,	"Tanks", false);
+	AddMultiTargetFilter("@t",							FilterTanks,	"Tanks", false);
 
 
 
@@ -1138,7 +1250,7 @@ public void OnPluginStart()
 	if( g_bLeft4Dead2 )
 	{
 		g_hCvarVScriptBuffer = CreateConVar("l4d2_vscript_return", "", "Buffer used to return VScript values. Do not use.", FCVAR_DONTRECORD);
-		g_hCvarAddonsEclipse = CreateConVar("l4d2_addons_eclipse", "-1", "Addons Manager (-1: use addonconfig; 0: disable addons; 1: enable addons.", FCVAR_NOTIFY);
+		g_hCvarAddonsEclipse = CreateConVar("l4d2_addons_eclipse", "-1", "Addons Manager (-1: use addonconfig; 0: disable addons; 1: enable addons.)", FCVAR_NOTIFY);
 		AutoExecConfig(true, "left4dhooks");
 		g_hCvarAddonsEclipse.AddChangeHook(ConVarChanged_Cvars);
 	}
@@ -1350,6 +1462,19 @@ public bool FilterSurvivor(const char[] pattern, Handle clients)
 	return true;
 }
 
+public bool FilterIncapped(const char[] pattern, Handle clients)
+{
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_isIncapacitated", 1) )
+		{
+			PushArrayCell(clients, i);
+		}
+	}
+
+	return true;
+}
+
 // Specific survivors
 void MatchSurvivor(Handle clients, int survivorCharacter)
 {
@@ -1369,14 +1494,14 @@ void MatchSurvivor(Handle clients, int survivorCharacter)
 
 				switch( modelname[29] )
 				{
-					case 'b':		type = 0; //nick
-					case 'd', 'w':	type = 1; //rochelle, adawong
-					case 'c':		type = 2; //coach
-					case 'h':		type = 3; //ellis
-					case 'v':		type = 4; //bill
-					case 'n':		type = 5; //zoey
-					case 'e':		type = 6; //francis
-					case 'a':		type = 7; //louis
+					case 'b':		type = 0; // Nick
+					case 'd', 'w':	type = 1; // Rochelle, Adawong
+					case 'c':		type = 2; // Coach
+					case 'h':		type = 3; // Ellis
+					case 'v':		type = 4; // Bill
+					case 'n':		type = 5; // Zoey
+					case 'e':		type = 6; // Francis
+					case 'a':		type = 7; // Louis
 					default:		type = 0;
 				}
 
@@ -1443,7 +1568,7 @@ public bool FilterFrancis(const char[] pattern, Handle clients)
 	return true;
 }
 
-public bool FilterLous(const char[] pattern, Handle clients)
+public bool FilterLouis(const char[] pattern, Handle clients)
 {
 	MatchSurvivor(clients, 7);
 	return true;
@@ -1463,6 +1588,167 @@ public bool FilterInfected(const char[] pattern, Handle clients)
 			PushArrayCell(clients, i);
 		}
 	}
+
+	return true;
+}
+
+
+// Filter - Random Incapped Survivors
+public bool FilterRandomA(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_isIncapacitated", 1) )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Survivors
+public bool FilterRandomB(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 2 )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Infected
+public bool FilterRandomC(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 3 )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Tank
+public bool FilterRandomD(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == g_iClassTank )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Incapped Survivor Bot
+public bool FilterRandomE(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && IsFakeClient(i) && GetEntProp(i, Prop_Send, "m_isIncapacitated", 1) )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Survivor Bot
+public bool FilterRandomF(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && IsFakeClient(i) )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Infected Bot
+public bool FilterRandomG(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && IsFakeClient(i) )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
+
+	return true;
+}
+
+// Filter - Random Tank Bot
+public bool FilterRandomH(const char[] pattern, Handle clients)
+{
+	ArrayList aList = new ArrayList();
+
+	for( int i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && IsFakeClient(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == g_iClassTank )
+		{
+			aList.Push(i);
+		}
+	}
+
+	PushArrayCell(clients, aList.Get(GetRandomInt(0, aList.Length - 1)));
+
+	delete aList;
 
 	return true;
 }
@@ -1532,32 +1818,51 @@ public void OnPluginEnd()
 		AddonsDisabler_Unpatch();
 
 	// Target Filters
-	RemoveMultiTargetFilter("@s",			FilterSurvivor);
-	RemoveMultiTargetFilter("@surv",		FilterSurvivor);
-	RemoveMultiTargetFilter("@survivors",	FilterSurvivor);
-	RemoveMultiTargetFilter("@infe",		FilterInfected);
-	RemoveMultiTargetFilter("@infected",	FilterInfected);
-	RemoveMultiTargetFilter("@i",			FilterInfected);
+	RemoveMultiTargetFilter("@s",						FilterSurvivor);
+	RemoveMultiTargetFilter("@surv",					FilterSurvivor);
+	RemoveMultiTargetFilter("@survivors",				FilterSurvivor);
+	RemoveMultiTargetFilter("@incappedsurvivors",		FilterIncapped);
+	RemoveMultiTargetFilter("@is",						FilterIncapped);
+	RemoveMultiTargetFilter("@infe",					FilterInfected);
+	RemoveMultiTargetFilter("@infected",				FilterInfected);
+	RemoveMultiTargetFilter("@i",						FilterInfected);
 
-	RemoveMultiTargetFilter("@nick",		FilterNick);
-	RemoveMultiTargetFilter("@rochelle",	FilterRochelle);
-	RemoveMultiTargetFilter("@coach",		FilterCoach);
-	RemoveMultiTargetFilter("@ellis",		FilterEllis);
-	RemoveMultiTargetFilter("@bill",		FilterBill);
-	RemoveMultiTargetFilter("@zoey",		FilterZoey);
-	RemoveMultiTargetFilter("@francis",		FilterFrancis);
-	RemoveMultiTargetFilter("@louis",		FilterLous);
+	RemoveMultiTargetFilter("@randomincappedsurvivor",	FilterRandomA);
+	RemoveMultiTargetFilter("@ris",						FilterRandomA);
+	RemoveMultiTargetFilter("@randomsurvivor",			FilterRandomB);
+	RemoveMultiTargetFilter("@rs",						FilterRandomB);
+	RemoveMultiTargetFilter("@randominfected",			FilterRandomC);
+	RemoveMultiTargetFilter("@ri",						FilterRandomC);
+	RemoveMultiTargetFilter("@randomtank",				FilterRandomD);
+	RemoveMultiTargetFilter("@rt",						FilterRandomD);
+	RemoveMultiTargetFilter("@incappedsurvivorbot",		FilterRandomE);
+	RemoveMultiTargetFilter("@isb",						FilterRandomE);
+	RemoveMultiTargetFilter("@survivorbot",				FilterRandomF);
+	RemoveMultiTargetFilter("@sb",						FilterRandomF);
+	RemoveMultiTargetFilter("@infectedbot",				FilterRandomG);
+	RemoveMultiTargetFilter("@ib",						FilterRandomG);
+	RemoveMultiTargetFilter("@tankbot",					FilterRandomH);
+	RemoveMultiTargetFilter("@tb",						FilterRandomH);
 
-	RemoveMultiTargetFilter("@smokers",		FilterSmoker);
-	RemoveMultiTargetFilter("@boomers",		FilterBoomer);
-	RemoveMultiTargetFilter("@hunters",		FilterHunter);
-	RemoveMultiTargetFilter("@spitters",	FilterSpitter);
-	RemoveMultiTargetFilter("@jockeys",		FilterJockey);
-	RemoveMultiTargetFilter("@chargers",	FilterCharger);
+	RemoveMultiTargetFilter("@nick",					FilterNick);
+	RemoveMultiTargetFilter("@rochelle",				FilterRochelle);
+	RemoveMultiTargetFilter("@coach",					FilterCoach);
+	RemoveMultiTargetFilter("@ellis",					FilterEllis);
+	RemoveMultiTargetFilter("@bill",					FilterBill);
+	RemoveMultiTargetFilter("@zoey",					FilterZoey);
+	RemoveMultiTargetFilter("@francis",					FilterFrancis);
+	RemoveMultiTargetFilter("@louis",					FilterLouis);
 
-	RemoveMultiTargetFilter("@tank",		FilterTanks);
-	RemoveMultiTargetFilter("@tanks",		FilterTanks);
-	RemoveMultiTargetFilter("@t",			FilterTanks);
+	RemoveMultiTargetFilter("@smokers",					FilterSmoker);
+	RemoveMultiTargetFilter("@boomers",					FilterBoomer);
+	RemoveMultiTargetFilter("@hunters",					FilterHunter);
+	RemoveMultiTargetFilter("@spitters",				FilterSpitter);
+	RemoveMultiTargetFilter("@jockeys",					FilterJockey);
+	RemoveMultiTargetFilter("@chargers",				FilterCharger);
+
+	RemoveMultiTargetFilter("@tank",					FilterTanks);
+	RemoveMultiTargetFilter("@tanks",					FilterTanks);
+	RemoveMultiTargetFilter("@t",						FilterTanks);
 }
 
 public void OnConfigsExecuted()
@@ -1665,6 +1970,15 @@ public MRESReturn AddonsDisabler(int pThis, Handle hReturn, Handle hParams)
 // ====================================================================================================
 //										DYNAMIC DETOURS SETUP
 // ====================================================================================================
+// Forward from "[DEV] Autoreload Plugins" by "Dragokas"
+public void AP_OnPluginUpdate(int pre) 
+{
+	if( pre == 0 )
+	{
+		CheckRequiredDetours();
+	}
+}
+
 public Action CmdLobby(int client, int args)
 {
 	Native_LobbyUnreserve(null, 0);
@@ -1678,7 +1992,9 @@ public Action CmdDetours(int client, int args)
 
 public Action CmdReload(int client, int args)
 {
+	float timing = GetEngineTime();
 	OnMapStart();
+	ReplyToCommand(client, "[Left4DHooks: Detours reloaded in %f seconds.", GetEngineTime() - timing);
 	return Plugin_Handled;
 }
 
@@ -1867,14 +2183,14 @@ void CheckRequiredDetours(int client = 0)
 					{
 						StopProfiling(g_vProf);
 						g_fProf += GetProfilerTime(g_vProf);
-						PrintToServer("<FORCED> detour %s", forwards);
+						ReplyToCommand(client - 1, "%40s> %s", "FORCED DETOUR", forwards);
 						StartProfiling(g_vProf);
 					}
 					#endif
 
 					if( client )
 					{
-						ReplyToCommand(client - 1, "<FORCED> detour %s", forwards);
+						ReplyToCommand(client - 1, "%40s> %s", "FORCED DETOUR", forwards);
 					}
 				}
 				// Check if used
@@ -1887,14 +2203,14 @@ void CheckRequiredDetours(int client = 0)
 					if( client == 0 )
 					{
 						#if DETOUR_ALL
-						filename = "<THIS_PLUGIN_TEST>";
+						filename = "THIS_PLUGIN_TEST";
 						#else
 						GetPluginFilename(hPlug, filename, sizeof(filename));
 						#endif
 
 						StopProfiling(g_vProf);
 						g_fProf += GetProfilerTime(g_vProf);
-						PrintToServer("%s using %s", filename, forwards);
+						PrintToServer("%40s> %s", filename, forwards);
 						StartProfiling(g_vProf);
 					}
 					#endif
@@ -1902,10 +2218,10 @@ void CheckRequiredDetours(int client = 0)
 					if( client )
 					{
 						#if DETOUR_ALL
-						ReplyToCommand(client - 1, "<FORCED> detour %s", forwards);
+						ReplyToCommand(client - 1, "%40s %s", "FORCED DETOUR", forwards);
 						#else
 						GetPluginFilename(hPlug, filename, sizeof(filename));
-						ReplyToCommand(client - 1, "%s using %s", filename, forwards);
+						ReplyToCommand(client - 1, "%40s> %s", filename, forwards);
 						#endif
 					}
 				}
@@ -2041,6 +2357,7 @@ public void OnMapStart()
 			// SDKCall(g_hSDK_Call_GetScriptValueInt, g_pDirector, "TotalCharger",			1);
 		}
 
+		// Melee weapon IDs - They can change when switching map depending on what melee weapons are enabled
 		if( g_bLeft4Dead2 )
 		{
 			delete g_aMeleePtrs;
@@ -2088,6 +2405,7 @@ void LoadGameDataRules()
 	GameData hGameData = new GameData(g_bLeft4Dead2 ? GAMEDATA_2 : GAMEDATA_1);
 	if( hGameData == null ) SetFailState("Failed to load \"%s.txt\" gamedata.", g_bLeft4Dead2 ? GAMEDATA_2 : GAMEDATA_1);
 
+	// Map changes can modify the address
 	g_pGameRules = hGameData.GetAddress("GameRules");
 	ValidateAddress(g_pGameRules, "g_pGameRules", true);
 
@@ -2203,7 +2521,7 @@ void LoadGameData()
 	} else {
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain); // zombieClass
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain); // Attempts
-		PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer); // Client
+		PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer, VDECODE_FLAG_ALLOWWORLD); // Client
 		PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK); // Vector return
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
 		g_hSDK_Call_GetRandomPZSpawnPosition = EndPrepSDKCall();
@@ -2233,7 +2551,7 @@ void LoadGameData()
 	{
 		LogError("Failed to find signature: FindRandomSpot");
 	} else {
-		PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
+		PrepSDKCall_SetReturnInfo(SDKType_Vector, SDKPass_ByValue);
 		g_hSDK_Call_FindRandomSpot = EndPrepSDKCall();
 		if( g_hSDK_Call_FindRandomSpot == null )
 			LogError("Failed to create SDKCall: FindRandomSpot");
@@ -2270,6 +2588,17 @@ void LoadGameData()
 		g_hSDK_Call_IsAnySurvivorInCheckpoint = EndPrepSDKCall();
 		if( g_hSDK_Call_IsAnySurvivorInCheckpoint == null )
 			LogError("Failed to create SDKCall: IsAnySurvivorInExitCheckpoint");
+	}
+
+	StartPrepSDKCall(SDKCall_Static);
+	if( PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "HasPlayerControlledZombies") == false )
+	{
+		LogError("Failed to find signature: HasPlayerControlledZombies");
+	} else {
+		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		g_hSDK_Call_HasPlayerControlledZombies = EndPrepSDKCall();
+		if( g_hSDK_Call_HasPlayerControlledZombies == null )
+			LogError("Failed to create SDKCall: HasPlayerControlledZombies");
 	}
 
 	StartPrepSDKCall(SDKCall_Static);
@@ -2426,17 +2755,23 @@ void LoadGameData()
 			LogError("Failed to create SDKCall: GetTeamScore");
 	}
 
-	StartPrepSDKCall(SDKCall_Raw);
+	if( g_bLeft4Dead2 )
+	{
+		StartPrepSDKCall(SDKCall_Raw);
+	} else {
+		StartPrepSDKCall(SDKCall_Static);
+	}
 	if( PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "IsFirstMapInScenario") == false )
 	{
 		LogError("Failed to find signature: IsFirstMapInScenario");
 	} else {
 		if( !g_bLeft4Dead2 )
 		{
-			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain, VDECODE_FLAG_ALLOWWORLD);
 			PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-		} else
-		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		} else {
+			PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		}
 		g_hSDK_Call_IsFirstMapInScenario = EndPrepSDKCall();
 		if( g_hSDK_Call_IsFirstMapInScenario == null )
 			LogError("Failed to create SDKCall: IsFirstMapInScenario");
@@ -2713,6 +3048,18 @@ void LoadGameData()
 		if( g_hSDK_Call_CancelStagger == null )
 			LogError("Failed to create SDKCall: CancelStagger");
 	}
+
+	/* Future addition maybe
+	StartPrepSDKCall(SDKCall_Player);
+	if( PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "RoundRespawn") == false )
+	{
+		LogError("Failed to find signature: RoundRespawn");
+	} else {
+		g_hSDK_Call_RoundRespawn = EndPrepSDKCall();
+		if( g_hSDK_Call_RoundRespawn == null )
+			LogError("Failed to create SDKCall: RoundRespawn");
+	}
+	// */
 
 	StartPrepSDKCall(SDKCall_Raw);
 	if( PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CreateRescuableSurvivors") == false )
@@ -3170,7 +3517,7 @@ void LoadGameData()
 	PrintToServer("Various Offsets:");
 	#endif
 
-	// g_bLinuxOS = hGameData.GetOffset("OS") == 1;
+	g_bLinuxOS = hGameData.GetOffset("OS") == 1;
 
 	m_iCampaignScores = hGameData.GetOffset("m_iCampaignScores");
 	ValidateOffset(m_iCampaignScores, "m_iCampaignScores");
@@ -3309,9 +3656,6 @@ void LoadGameData()
 
 
 	#if DEBUG
-	PrintToServer("g_iAddonEclipse1 = %d", g_iAddonEclipse1);
-	PrintToServer("g_iAddonEclipse2 = %d", g_iAddonEclipse2);
-
 	PrintToServer("m_iCampaignScores = %d", m_iCampaignScores);
 	PrintToServer("m_fTankSpawnFlowPercent = %d", m_fTankSpawnFlowPercent);
 	PrintToServer("m_fWitchSpawnFlowPercent = %d", m_fWitchSpawnFlowPercent);
@@ -3327,6 +3671,8 @@ void LoadGameData()
 
 	if( g_bLeft4Dead2 )
 	{
+		PrintToServer("g_iAddonEclipse1 = %d", g_iAddonEclipse1);
+		PrintToServer("g_iAddonEclipse2 = %d", g_iAddonEclipse2);
 		PrintToServer("SpawnTimer = %d", SpawnTimer);
 		PrintToServer("MobSpawnTimer = %d", MobSpawnTimer);
 		PrintToServer("OnBeginRoundSetupTime = %d", OnBeginRoundSetupTime);
@@ -3424,6 +3770,7 @@ public int Native_Deafen(Handle plugin, int numParams)
 	ValidateNatives(g_hSDK_Call_Deafen, "Deafen");
 
 	int client = GetNativeCell(1);
+
 	//PrintToServer("#### CALL g_hSDK_Call_Deafen");
 	SDKCall(g_hSDK_Call_Deafen, client, 1.0, 0.0, 0.01 );
 }
@@ -3461,6 +3808,7 @@ public int Native_OnITExpired(Handle plugin, int numParams)
 	ValidateNatives(g_hSDK_Call_OnITExpired, "OnITExpired");
 
 	int client = GetNativeCell(1);
+
 	//PrintToServer("#### CALL g_hSDK_Call_OnITExpired");
 	SDKCall(g_hSDK_Call_OnITExpired, client);
 }
@@ -3472,6 +3820,7 @@ public int Native_AngularVelocity(Handle plugin, int numParams)
 	float vAng[3];
 	int entity = GetNativeCell(1);
 	GetNativeArray(2, vAng, 3);
+
 	//PrintToServer("#### CALL g_hSDK_Call_AngularVelocity");
 	SDKCall(g_hSDK_Call_AngularVelocity, entity, vAng);
 }
@@ -3513,8 +3862,8 @@ public int Native_FindRandomSpot(Handle plugin, int numParams)
 	int area = GetNativeCell(1);
 
 	//PrintToServer("#### CALL g_hSDK_Call_FindRandomSpot");
-	SDKCall(g_hSDK_Call_FindRandomSpot, area, vPos);
-	SetNativeArray(2, vPos, 3);
+	SDKCall(g_hSDK_Call_FindRandomSpot, area, vPos, sizeof(vPos));
+	SetNativeArray(2, vPos, sizeof(vPos));
 }
 
 public int Native_HasAnySurvivorLeftSafeArea(Handle plugin, int numParams)
@@ -3587,6 +3936,13 @@ bool InCheckpoint(int client, bool start)
 	return false;
 }
 
+public int Native_HasPlayerControlledZombies(Handle plugin, int numParams)
+{
+	ValidateNatives(g_hSDK_Call_HasPlayerControlledZombies, "HasPlayerControlledZombies");
+
+	return SDKCall(g_hSDK_Call_HasPlayerControlledZombies);
+}
+
 public int Native_PipeBombPrj(Handle plugin, int numParams)
 {
 	ValidateNatives(g_hSDK_Call_PipeBombPrj, "PipeBombPrj");
@@ -3642,10 +3998,33 @@ public int Native_IsReachable(Handle plugin, int numParams)
 {
 	ValidateNatives(g_hSDK_Call_IsReachable, "IsReachable");
 
-	float vPos[3];
 	int client = GetNativeCell(1);
-	GetNativeArray(2, vPos, 3);
 
+	if( IsFakeClient(client) == false || (GetClientTeam(client) != 2 && GetClientTeam(client) != 4) )
+	{
+		client = 0;
+
+		for( int i = 1; i <= MaxClients; i++ )
+		{
+			if( IsClientInGame(i) && IsFakeClient(i) && IsPlayerAlive(i) )
+			{
+				int team = GetClientTeam(i);
+				if( team == 2 || team == 4 )
+				{
+					client = i;
+					break;
+				}
+			}
+		}
+
+		if( !client )
+		{
+			ThrowNativeError(SP_ERROR_PARAM, "L4D2_IsReachable Error: invalid client. This native only works for Survivor Bots.");
+		}
+	}
+
+	float vPos[3];
+	GetNativeArray(2, vPos, 3);
 	return SDKCall(g_hSDK_Call_IsReachable, client, vPos);
 }
 
@@ -3748,7 +4127,7 @@ public any Native_GetPlayerSpawnTime(Handle plugin, int numParams)
 	ValidateAddress(SpawnTimer, "SpawnTimer");
 
 	int client = GetNativeCell(1);
-	return LoadFromAddress(GetEntityAddress(client) + view_as<Address>(SpawnTimer + 8), NumberType_Int32);
+	return (view_as<float>(LoadFromAddress(GetEntityAddress(client) + view_as<Address>(SpawnTimer + 8), NumberType_Int32)) - GetGameTime());
 }
 
 public int Native_RestartScenarioFromVote(Handle plugin, int numParams)
@@ -3758,6 +4137,7 @@ public int Native_RestartScenarioFromVote(Handle plugin, int numParams)
 
 	char map[64];
 	GetNativeString(1, map, sizeof(map));
+
 	//PrintToServer("#### CALL g_hSDK_Call_RestartScenarioFromVote");
 	return SDKCall(g_hSDK_Call_RestartScenarioFromVote, g_pDirector, map);
 }
@@ -3795,7 +4175,7 @@ public int Native_GetTeamScore(Handle plugin, int numParams)
 		int team = GetNativeCell(1);
 		if( team != SCORE_TEAM_A && team != SCORE_TEAM_B )
 		{
-			ThrowNativeError(SP_ERROR_PARAM, "Logical team %d is invalid. Accepted values: 0 or 1.", team);
+			ThrowNativeError(SP_ERROR_PARAM, "Logical team %d is invalid. Accepted values: 1 or 2.", team);
 		}
 
 		//campaign_score is a boolean so should be 0 (use round score) or 1 only
@@ -3832,8 +4212,49 @@ public int Native_IsFirstMapInScenario(Handle plugin, int numParams)
 		ValidateNatives(SDK_KV_GetString, "SDK_KV_GetString");
 		static char sMap[64], check[64];
 
+		/*
+		// NULL PTR - METHOD (kept for demonstration)
+		// "malloc" replacement hack (method by @Rostu)
+		Address pNull = GetEntityAddress(0) + view_as<Address>(m_iClrRender);
+
+		// Save old value
+		int iRestore = LoadFromAddress(pNull, NumberType_Int32);
+
+		// Some test to ensure that our temporary buffer is not corrupted with SDK Call
+		// Test first 1024 bytes
+		// int data[256];
+		// for( int i = 0; i < sizeof(data); i++ )
+		// {
+		// 	data[i] = LoadFromAddress(pNull + view_as<Address>(i*4), NumberType_Int32);
+		// }
+
+		// Should be 0 to match the original call arguments
+		StoreToAddress(pNull, 0, NumberType_Int32);
+
+		int keyvalue = SDKCall(g_hSDK_Call_IsFirstMapInScenario, pNull); // NULL PTR - METHOD (kept for demonstration)
+		// */
+
 		//PrintToServer("#### CALL g_hSDK_Call_IsFirstMapInScenario");
-		int keyvalue = SDKCall(g_hSDK_Call_IsFirstMapInScenario, 0, 0);
+		int keyvalue = SDKCall(g_hSDK_Call_IsFirstMapInScenario, 0);
+
+		// Restore the old value
+		// StoreToAddress(pNull, iRestore, NumberType_Int32); // NULL PTR - METHOD (kept for demonstration)
+
+		// NULL PTR - METHOD (kept for demonstration)
+		// Verification
+		/*
+		PrintToServer("Checking for temp. buffer modifications ...");
+		int new_byte;
+		for( int i = 0; i < sizeof(data); i++ )
+		{
+			new_byte = LoadFromAddress(pNull + view_as<Address>(i*4), NumberType_Int32);
+			if( data[i] != new_byte )
+			{
+				PrintToServer("m_iClrRender struct corrupted @%i: byte %X != %X", i*4, new_byte, data[i]);
+			}
+		}
+		*/
+
 		if( keyvalue )
 		{
 			GetCurrentMap(sMap, sizeof(sMap));
@@ -3852,6 +4273,7 @@ public int Native_IsFirstMapInScenario(Handle plugin, int numParams)
 public int Native_IsMissionFinalMap(Handle plugin, int numParams)
 {
 	ValidateNatives(g_hSDK_Call_IsMissionFinalMap, "IsMissionFinalMap");
+
 	//PrintToServer("#### CALL g_hSDK_Call_IsMissionFinalMap");
 	return SDKCall(g_hSDK_Call_IsMissionFinalMap);
 }
@@ -3960,6 +4382,7 @@ public int Native_SpawnSpecial(Handle plugin, int numParams)
 	if( g_bLeft4Dead2 )
 	{
 		ValidateNatives(g_hSDK_Call_SpawnSpecial, "SpawnSpecial");
+
 		//PrintToServer("#### CALL g_hSDK_Call_SpawnSpecial");
 		return SDKCall(g_hSDK_Call_SpawnSpecial, g_pZombieManager, zombieClass, vPos, vAng);
 	}
@@ -3970,18 +4393,21 @@ public int Native_SpawnSpecial(Handle plugin, int numParams)
 			case 1:
 			{
 				ValidateNatives(g_hSDK_Call_SpawnSmoker, "SpawnSmoker");
+
 				//PrintToServer("#### CALL g_hSDK_Call_SpawnSmoker");
 				return SDKCall(g_hSDK_Call_SpawnSmoker, g_pZombieManager, vPos, vAng);
 			}
 			case 2:
 			{
 				ValidateNatives(g_hSDK_Call_SpawnBoomer, "SpawnBoomer");
+
 				//PrintToServer("#### CALL g_hSDK_Call_SpawnBoomer");
 				return SDKCall(g_hSDK_Call_SpawnBoomer, g_pZombieManager, vPos, vAng);
 			}
 			case 3:
 			{
 				ValidateNatives(g_hSDK_Call_SpawnHunter, "SpawnHunter");
+
 				//PrintToServer("#### CALL g_hSDK_Call_SpawnHunter");
 				return SDKCall(g_hSDK_Call_SpawnHunter, g_pZombieManager, vPos, vAng);
 			}
@@ -4258,7 +4684,7 @@ public int Native_GetBoolMeleeAttribute(Handle plugin, int numParams)
 public int Native_SetIntMeleeAttribute(Handle plugin, int numParams)
 {
 	int attr = GetNativeCell(2);
-	if( attr >= view_as<int>(MAX_SIZE_L4D2BoolMeleeWeaponAttributes) ) // view_as to avoid tag mismatch from enum "type"
+	if( attr >= view_as<int>(MAX_SIZE_L4D2IntMeleeWeaponAttributes) ) // view_as to avoid tag mismatch from enum "type"
 		ThrowNativeError(SP_ERROR_PARAM, "Invalid attribute id");
 
 	int ptr = GetMeleePointer(GetNativeCell(1));
@@ -4273,7 +4699,7 @@ public int Native_SetIntMeleeAttribute(Handle plugin, int numParams)
 public int Native_SetFloatMeleeAttribute(Handle plugin, int numParams)
 {
 	int attr = GetNativeCell(2);
-	if( attr >= view_as<int>(MAX_SIZE_L4D2BoolMeleeWeaponAttributes) ) // view_as to avoid tag mismatch from enum "type"
+	if( attr >= view_as<int>(MAX_SIZE_L4D2FloatMeleeWeaponAttributes) ) // view_as to avoid tag mismatch from enum "type"
 		ThrowNativeError(SP_ERROR_PARAM, "Invalid attribute id");
 
 	int ptr = GetMeleePointer(GetNativeCell(1));
@@ -5074,7 +5500,10 @@ public any Direct_GetFlowDistance(Handle plugin, int numParams)
 	int area = SDKCall(g_hSDK_Call_GetLastKnownArea, client);
 	if( area == 0 ) return 0.0;
 
-	return LoadFromAddress(view_as<Address>(area + m_flow), NumberType_Int32);
+	float flow = view_as<float>(LoadFromAddress(view_as<Address>(area + m_flow), NumberType_Int32));
+	if( flow == -9999.0 ) flow = 0.0;
+
+	return flow;
 }
 
 public int Direct_DoAnimationEvent(Handle plugin, int numParams)
@@ -5370,6 +5799,16 @@ public int Native_CancelStagger(Handle plugin, int numParams)
 	int client = GetNativeCell(1);
 	SDKCall(g_hSDK_Call_CancelStagger, client);
 }
+
+/* Future addition maybe
+public int Native_RespawnPlayer(Handle plugin, int numParams)
+{
+	ValidateNatives(g_hSDK_Call_RoundRespawn, "g_hSDK_Call_RoundRespawn");
+
+	int client = GetNativeCell(1);
+	SDKCall(g_hSDK_Call_RoundRespawn, client);
+}
+// */
 
 public int Native_CreateRescuableSurvivors(Handle plugin, int numParams)
 {
@@ -6529,15 +6968,28 @@ public MRESReturn CTerrorWeapon_OnHit(int weapon, Handle hReturn, Handle hParams
 	bool userCall = DHookGetParam(hParams, 3);
 	if( userCall )
 	{
+		// CTerrorWeapon::OnHit(CGameTrace &, Vector const&, bool)
+		// Get target from CGameTrace
 		int trace = DHookGetParam(hParams, 1);
-		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 		int target = LoadFromAddress(view_as<Address>(trace + 76), NumberType_Int32);
-		if( target ) target = GetClientFromAddress(target);
+		if( !target ) return MRES_Ignored;
 
-		if( client > 0 && client <= MaxClients && target > 0 && target <= MaxClients )
+		// Returns entity address, get entity or client index
+		target = GetEntityFromAddress(target);
+		if( !target ) target = GetClientFromAddress(target);
+		if( !target ) return MRES_Ignored;
+
+		// Verify client hitting
+		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+		if( client > 0 && client <= MaxClients )
 		{
-			// int deadStop = LoadFromAddress(view_as<Address>(target + 16024), NumberType_Int32) > 0;
-			int deadStop = GetEntProp(target, Prop_Send, "m_isAttemptingToPounce");
+			// Dead stop option - not always correct but should show if hunter was pouncing while punched
+			int deadStop;
+			if( target > 0 && target <= MaxClients )
+			{
+				// deadStop = LoadFromAddress(view_as<Address>(target + 16024), NumberType_Int32) > 0;
+				deadStop = GetEntProp(target, Prop_Send, "m_isAttemptingToPounce");
+			}
 
 			float vec[3];
 			DHookGetParamVector(hParams, 2, vec);
@@ -6842,6 +7294,25 @@ bool GetVScriptOutput(char[] code, char[] ret, int maxlength)
 	return true;
 }
 
+int GetEntityFromAddress(int addr)
+{
+	int max = GetEntityCount();
+	for( int i = 0; i <= max; i++ )
+		if( IsValidEdict(i) )
+			if( GetEntityAddress(i) == view_as<Address>(addr) )
+				return i;
+	return -1;
+}
+
+int GetClientFromAddress(int addr)
+{
+	for(int i = 1; i <= MaxClients; i++ )
+		if( IsClientInGame(i) )
+			if( GetEntityAddress(i) == view_as<Address>(addr) )
+				return i;
+	return 0;
+}
+
 // Unused, but here for demonstration and if required
 stock void ReadMemoryString(int addr, char[] temp, int size)
 {
@@ -6862,24 +7333,4 @@ stock void ReadMemoryString(int addr, char[] temp, int size)
 			return;
 		}
 	}
-}
-
-// Unused, but here for demonstration and if required
-stock int GetEntityFromAddress(int addr)
-{
-	int max = GetEntityCount();
-	for( int i = 0; i <= max; i++ )
-		if( IsValidEdict(i) )
-			if( GetEntityAddress(i) == view_as<Address>(addr) )
-				return i;
-	return -1;
-}
-
-int GetClientFromAddress(int addr)
-{
-	for(int i = 1; i <= MaxClients; i++ )
-		if( IsClientInGame(i) )
-			if( GetEntityAddress(i) == view_as<Address>(addr) )
-				return i;
-	return 0;
 }
